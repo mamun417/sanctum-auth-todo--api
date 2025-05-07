@@ -2,14 +2,18 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Task extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'title',
         'body',
         'is_completed',
+        'user_id', // Add user_id to fillable
     ];
 
     protected $casts = [
@@ -21,7 +25,10 @@ class Task extends Model
         parent::boot();
 
         static::creating(function ($task) {
-            $task->user_id = auth()->id();
+            // Only set user_id if it is not already provided
+            if (!$task->user_id) {
+                $task->user_id = auth()->id();
+            }
         });
     }
 
