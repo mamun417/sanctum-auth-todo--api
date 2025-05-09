@@ -13,7 +13,6 @@ class Task extends Model
         'title',
         'body',
         'is_completed',
-        'user_id', // Add user_id to fillable
     ];
 
     protected $casts = [

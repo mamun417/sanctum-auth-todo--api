@@ -7,21 +7,25 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreTaskRequest;
 use App\Http\Resources\TaskResource;
 use App\Models\Task;
+use App\Services\TaskService;
 use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
     const PAGINATION_LIMIT = 5;
 
+    protected TaskService $taskService;
+
+    public function __construct(TaskService $taskService)
+    {
+        $this->taskService = $taskService;
+    }
+
     public function index()
     {
         $search = request('search');
 
-        $tasksQuery = Task::query()->forUser()->latest();
-
-        if ($search) {
-            $tasksQuery->where('title', 'LIKE', "%{$search}%");
-        }
+        $tasksQuery = $this->taskService->getTasksQuery($search);
 
         $tasks = $tasksQuery->paginate(self::PAGINATION_LIMIT);
 
@@ -32,7 +36,7 @@ class TaskController extends Controller
 
     public function store(StoreTaskRequest $request)
     {
-        $task = Task::create($request->only(['title', 'body']));
+        $task = $this->taskService->createTask($request->only(['title', 'body']));
         $task = new TaskResource($task);
 
         return $this->success('Task created successfully.', ['data' => $task], HttpStatusCodes::CREATED);
@@ -50,13 +54,11 @@ class TaskController extends Controller
 
     public function update(StoreTaskRequest $request, $id)
     {
-        $task = Task::query()->forUser()->find($id);
+        $task = $this->taskService->updateTask($id, $request->only(['title', 'body']));
 
         if (!$task) {
             return $this->error('Task not found.', HttpStatusCodes::NOT_FOUND);
         }
-
-        $task->update($request->only(['title', 'body']));
 
         $task = new TaskResource($task);
 
